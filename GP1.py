@@ -610,10 +610,55 @@ def SearchForPosts(currUser):
     '''
 
 def PostActionAnswer(currUser, pid):
-    pass
+    #function to let a user post an answer to a question, if the post selected is a question
+    global connection, cursor
+
+    cursor.execute('SELECT * FROM posts p, questions q WHERE q.pid = p.pid AND p.pid = ?;', (pid,))
+    while cursor.fetchone() is None:
+            print("The post you selected is not a question\n")
+            pid = input("Please enter a valid post id of a question: ")
+            cursor.execute('SELECT * FROM posts p, questions q WHERE q.pid = p.pid AND p.pid = ?;', (pid,))
+
+    qid = pid
+    pid = generatePid()
+
+    title = input("Enter the title for your answer: ")
+    while len(title) < 1:
+        title = input("Your answer must have a title.\nEnter a valid title for your answer: ")
+
+    #ASSUMPTION - the body does not need text as the answer title may provide enough information.
+    body = input("Enter a body for your answer(optional): ")
+    if len(body) < 1:
+        body = " "
+
+    #Insert values into posts table first, then into answers table.
+    cursor.execute("INSERT INTO posts(pid, pdate, title, body, poster) VALUES (?, date('now'),?,?,?);",(pid, title, body, currUser._uid))
+    cursor.execute("INSERT INTO answers(pid, qid) VALUES (?,?);", (pid,qid))
+
+    connection.commit()
+    print("Answer successfully posted.")
+    return
 
 def PostActionVote(currUser):
-    pass
+    #function to let a user vote on a post, if they have not voted on it yet
+    global connection, cursor
+    cursor.execute('SELECT * FROM votes WHERE uid = ? AND pid = ?;', (currUser._uid, pid))
+    while cursor.fetchone() is not None:
+            print("You have already voted on this post\n")
+            pid = input("Please enter a valid post id (one you have yet to vote on): ")
+            cursor.execute('SELECT * FROM votes WHERE uid = ? AND pid = ?;', (currUser._uid, pid))
+
+
+    "vno assigned by your system"
+    #ASSUMPTION - vno is a variable that is counting the number of votes, independent of whether or not the vote was up or down.
+    cursor.execute('SELECT COUNT(vno) FROM votes WHERE pid = ?;',(pid,))
+    vno = (cursor.fetchone()[0] + 1)
+
+    cursor.execute("INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?);",(pid,vno,currUser._uid))
+
+    connection.commit()
+    print("Post successfully voted on.")
+    return
 
 def PostActionMarkAsTheAccepted(currUser, pid):
     cursor.execute("select * from answers where pid=?;",[pid])
