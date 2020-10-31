@@ -609,10 +609,6 @@ def SearchForPosts(currUser):
     The user should be able to select a post and perform a post action (as discussed next).
     '''
 
-def displayMorePosts():
-    pass
-    
-
 def PostActionAnswer(currUser, pid):
     pass
 
@@ -629,6 +625,9 @@ def PostActionAddATag(currUser):
     pass
 
 def PostActionEdit(currUser):
+    pass
+
+def displayMorePosts():
     pass
 
 main()
