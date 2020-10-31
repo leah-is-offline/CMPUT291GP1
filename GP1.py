@@ -32,9 +32,9 @@ def main():
 
     '''dont need to run the three following commands every run
     just to instantiate the db and define the tables '''
-    dropTables() 
-    defineTables()
-    insertData()
+    #dropTables() 
+    #defineTables()
+    #insertData()
 
     currUser = CurrentUser() 
     homeScreen(currUser)
@@ -583,6 +583,7 @@ def SearchForPosts(currUser):
     all_entry = cursor.fetchall()
     for one_entry in all_entry:
         print(one_entry)
+        print("\n")
 
 
     
@@ -599,14 +600,15 @@ def SearchForPosts(currUser):
         selection = input("Make a selection from the menu by entering the option number: ")
         
     if selection == '1':
-        displayMorePosts() #for leah to do (remove post limit or let user set how many more posts they want to see) + re query
+        displayLimit += 5
+        #for leah to do (remove post limit or let user set how many more posts they want to see) + re query
     elif selection == '2':
         pid = input("enter the post id you would like to perform an action on: ")
 
-        cursor.execute('SELECT * FROM posts p WHERE p.pid=?', (pid,))
+        cursor.execute('SELECT * FROM posts p WHERE p.pid=?;', (pid,))
         while cursor.fetchone() is None:
             pid = input("Please enter a valid post id: ")
-            cursor.execute('SELECT * FROM posts p WHERE p.pid=?', (pid,))
+            cursor.execute('SELECT * FROM posts p WHERE p.pid=?;', (pid,))
         
         displayPostActionMenu(currUser,pid)
     
@@ -615,11 +617,11 @@ def PostActionAnswer(currUser, pid):
     #function to let a user post an answer to a question, if the post selected is a question
     global connection, cursor
 
-    cursor.execute('SELECT * FROM posts p, questions q WHERE q.pid = p.pid AND p.pid = ?', (pid,))
+    cursor.execute('SELECT * FROM posts p, questions q WHERE q.pid = p.pid AND p.pid = ?;', (pid,))
     while cursor.fetchone() is None:
             print("The post you selected is not a question\n")
             pid = input("Please enter a valid post id of a question: ")
-            cursor.execute('SELECT * FROM posts p, questions q WHERE q.pid = p.pid AND p.pid = ?', (pid,))
+            cursor.execute('SELECT * FROM posts p, questions q WHERE q.pid = p.pid AND p.pid = ?;', (pid,))
 
     qid = pid
     pid = generatePid()
@@ -642,40 +644,41 @@ def PostActionAnswer(currUser, pid):
     return
 
 
-def PostActionVote(currUser):
+def PostActionVote(currUser,pid):
+    #function to let a user vote on a post, if they have not voted on it yet
+    global connection, cursor
+
+    cursor.execute('SELECT * FROM votes WHERE uid = ? AND pid = ?;', (currUser._uid, pid))
+    while cursor.fetchone() is not None:
+            print("You have already voted on this post\n")
+            pid = input("Please enter a valid post id (one you have yet to vote on): ")
+            cursor.execute('SELECT * FROM votes WHERE uid = ? AND pid = ?;', (currUser._uid, pid))
+
+
+    "vno assigned by your system"
+    #ASSUMPTION - vno is a variable that is counting the number of votes, independent of whether or not the vote was up or down.
+    cursor.execute('SELECT COUNT(vno) FROM votes WHERE pid = ?;',(pid,))
+    vno = (cursor.fetchone()[0] + 1)
+
+    cursor.execute("INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?);",(pid,vno,currUser._uid))
+
+    connection.commit()
+    print("Post successfully voted on.")
+    return
+
+
+def PostActionMarkAsTheAccepted(currUser,pid):
     pass
 
-def PostActionMarkAsTheAccepted(currUser, pid):
-    cursor.execute("select * from answers where pid=?;",[pid])
-    post = cursor.fetchone()
-    cursor.execute("select * from questions where pid=?",[post[1]])
-    question = cursor.fetchone()
-    cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
-    cursor.commit()
-    displayMenu(currUser)
-
-def PostActionGiveABadge(currUser, pid):
-    cursor.execute("select * from posts where pid=?;",[pid])
-    post = cursor.fetchone()
-    poster = post[4]
-    bname = input("Enter a badge: ")
-    cursor.execute("select bname from badges where bname=?",[bname])
-    badge = cursor.fetchone()
-    while badge is None:
-        bname = input("Enter a valid badge(): ")
-        cursor.execute("select bname from badges where bname=?",[bname])
-        badge = cursor.fetchone()
-    cursor.execute("insert into ubadges uid, bdate, bname values (uid, date('now'), bname)",{"uid":poster,"bname":bname})
-    cursor.commit()
-    displayMenu(currUser)
-
-def PostActionAddATag(currUser, pid):
+def PostActionGiveABadge(currUser,pid):
     pass
 
-def PostActionEdit(currUser, pid):
+def PostActionAddATag(currUser,pid):
     pass
 
-def displayMorePosts():
+def PostActionEdit(currUser,pid):
     pass
+
+
 
 main()
