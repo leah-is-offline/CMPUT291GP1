@@ -574,7 +574,7 @@ def PostActionGiveABadge(currUser):
     post = cursor.fetchone()
     while post is None:
         pid = input("Enter a valid answer pid: ")
-        cursor.execute("select * from answers where pid=?;",[pid])
+        cursor.execute("select * from posts where pid=?;",[pid])
         post = cursor.fetchone()
     poster = post[4]
     bname = input("Enter a badge: ")
