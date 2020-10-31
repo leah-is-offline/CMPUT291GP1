@@ -3,6 +3,7 @@ import time
 import hashlib
 import os
 import sys
+import datetime
 
 connection = None
 cursor = None
@@ -547,12 +548,6 @@ def SearchForPosts(currUser):
     The user should be able to select a post and perform a post action (as discussed next).
     '''
 
-    
-
-    
-        
-    
-
 def PostActionAnswer(currUser, pid):
     pass
 
@@ -566,11 +561,23 @@ def PostActionMarkAsTheAccepted(currUser):
     cursor.execute("select * from questions where pid=?",[post[1]])
     question = cursor.fetchone()
     cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
+    cursor.commit()
     displayMenu(currUser)
 
 def PostActionGiveABadge(currUser):
     pid = input("Enter a post pid: ")
-
+    cursor.execute("select * from posts where pid=?;",[pid])
+    post = cursor.fetchone()
+    poster = post[4]
+    bname = input("Enter a Badge: ")
+    cursor.execute("select bname from badges where bname=?",[bname])
+    badge = cursor.fetchone()
+    while badge is None:
+        bname = input("Enter a valid Badge(): ")
+        cursor.execute("select bname from badges where bname=?",[bname])
+        badge = cursor.fetchone()
+    cursor.execute("insert into ubadges uid, bdate, bname values (uid, date(now), bname)",{"uid":poster,"bname":bname})
+    cursor.commit()
     displayMenu(currUser)
 
 def PostActionAddATag(currUser):
