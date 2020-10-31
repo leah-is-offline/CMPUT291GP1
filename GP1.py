@@ -558,6 +558,10 @@ def PostActionMarkAsTheAccepted(currUser):
     pid = input("Enter an answer pid: ")
     cursor.execute("select * from answers where pid=?;",[pid])
     post = cursor.fetchone()
+    while post is None:
+        pid = input("Enter a valid answer pid: ")
+        cursor.execute("select * from answers where pid=?;",[pid])
+        post = cursor.fetchone()
     cursor.execute("select * from questions where pid=?",[post[1]])
     question = cursor.fetchone()
     cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
@@ -568,12 +572,16 @@ def PostActionGiveABadge(currUser):
     pid = input("Enter a post pid: ")
     cursor.execute("select * from posts where pid=?;",[pid])
     post = cursor.fetchone()
+    while post is None:
+        pid = input("Enter a valid answer pid: ")
+        cursor.execute("select * from answers where pid=?;",[pid])
+        post = cursor.fetchone()
     poster = post[4]
-    bname = input("Enter a Badge: ")
+    bname = input("Enter a badge: ")
     cursor.execute("select bname from badges where bname=?",[bname])
     badge = cursor.fetchone()
     while badge is None:
-        bname = input("Enter a valid Badge(): ")
+        bname = input("Enter a valid badge(): ")
         cursor.execute("select bname from badges where bname=?",[bname])
         badge = cursor.fetchone()
     cursor.execute("insert into ubadges uid, bdate, bname values (uid, date('now'), bname)",{"uid":poster,"bname":bname})
