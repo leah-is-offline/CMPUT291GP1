@@ -640,10 +640,23 @@ def PostActionGiveABadge(currUser, pid):
     displayMenu(currUser)
 
 def PostActionAddATag(currUser, pid):
-    pass
+    tag = input("Enter a tag: ")
+    cursor.execute("select * from tags where pid=:a and tag=:b", {"a":pid, "b":tag})
+    duplicate = cursor.fetchone()
+    while duplicate:
+        tag = input("Enter a new tag: ")
+        cursor.execute("select * from tags where pid=:a and tag=:b", {"a":pid, "b":tag})
+        duplicate = cursor.fetchone()
+    cursor.execute("insert into tags (pid, tag) values (?, ?)", (pid, tag))
+    cursor.commit()
+    displayMenu(currUser)
+
 
 def PostActionEdit(currUser, pid):
-    pass
+    cursor.execute("select * from posts where pid=?;",[pid])
+    post = cursor.fetchone()
+    title = input("Enter new title(blank for no change): ")
+    body = input("Enter new body(blank for no change): ")
 
 def displayMorePosts():
     pass
