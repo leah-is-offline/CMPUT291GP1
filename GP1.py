@@ -423,34 +423,22 @@ def checkPrivilege(currUser):
     
 
 def displayMenu(currUser):
-    #function display the appropriate menu depending on privelege
-
-    privilege = checkPrivilege(currUser)
+    #function to display menu for all users
 
     header = "| # | Option\n"
     op1 = "| 1 | Post a question\n" 
     op2 = "| 2 | Search for posts\n"
-    op3 = "| 3 | Post action-Answer\n"
-    op4 = "| 4 | Post action-Vote\n"
-    op5 = "| 5 | Post action-Mark as the accepted\n"
-    op6 = "| 6 | Post action-Give a badge\n"
-    op7 = "| 7 | Post action-Add a tag\n"
-    op8 = "| 8 | Post Action-Edit\n"
-    op9 = "| 9 | Logout\n"
-    op10 ="| 10| Exit\n"
+    op3 = "| 3 | Logout\n"
+    op4 = "| 4 | Exit\n"
     b1 =  "______________________________________\n"
+    print("*** to perform post actions, search for a post first ***")
     
-
-    if privilege is True:
-        print("\n",header,op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,b1)
-    else:   
-        print("\n",header,op1,op2,op3,op4,op9,op10,b1)
-        
-
+    print("\n",header,op1,op2,op3,op4,b1)
+    
     selection = input("Make a selection from the menu by entering the option number: ")
 
 
-    while selection not in ['1','2','3','4','5','6','7','8','9','10']:
+    while selection not in ['1','2','3','4']:
         print("Please enter a valid selection !")
         selection = input("Make a selection from the menu by entering the option number: ")
         
@@ -459,22 +447,65 @@ def displayMenu(currUser):
     elif selection == '2':
         SearchForPosts(currUser)
     elif selection == '3':
-        PostActionAnswer(currUser)
-    elif selection == '4':
-        PostActionVote(currUser)
-    elif selection == '5' and privilege is True:
-        PostActionMarkAsTheAccepted(currUser)
-    elif selection == '6' and privilege is True:
-        PostActionGiveABadge(currUser)
-    elif selection == '7' and privilege is True:
-        PostActionAddATag(currUser)
-    elif selection == '8' and privilege is True:
-        PostActionEdit(currUser)
-    elif selection == '9':
         logout(currUser)
     else:
-        #when selection == 10
+        #when selection == 4
         exitProgram(currUser)
+        
+
+def displayPostActionMenu(currUser,pid):
+        #function display the appropriate menu depending on privelege
+
+    privilege = checkPrivilege(currUser)
+
+    header = "| # | Option\n"
+    op1 = "| 1 | Post action-Answer\n"
+    op2 = "| 2 | Post action-Vote\n"
+    op3 = "| 3 | Post action-Mark as the accepted\n"
+    op4 = "| 4 | Post action-Give a badge\n"
+    op5 = "| 5 | Post action-Add a tag\n"
+    op6 = "| 6 | Post Action-Edit\n"
+    op7 = "| 7 | Logout\n"
+    op8 = "| 8 | Exit\n"
+    b1 =  "______________________________________\n"
+    
+
+    if privilege is True:
+        print("\n",header,op1,op2,op3,op4,op5,op6,op7,op8,b1)
+    else:   
+        print("\n",header,op1,op2,op7,op8,b1)
+        
+
+    selection = input("Make a selection from the menu by entering the option number: ")
+
+    if privilege is True:
+        while selection not in ['1','2','3','4','5','6','7','8']:
+            print("Please enter a valid selection !")
+            selection = input("Make a selection from the menu by entering the option number: ")
+    else:
+        while selection not in ['1','2','7','8']:
+            print("Please enter a valid selection !")
+            selection = input("Make a selection from the menu by entering the option number: ")
+
+        
+    if selection == '1':
+        PostActionAnswer(currUser,pid)
+    elif selection == '2':
+        PostActionVote(currUser,pid)
+    elif selection == '3' and privilege is True:
+        PostActionMarkAsTheAccepted(currUser,pid)
+    elif selection == '4' and privilege is True:
+        PostActionGiveABadge(currUser,pid)
+    elif selection == '5' and privilege is True:
+        PostActionAddATag(currUser,pid)
+    elif selection == '6'and privilege is True:
+        PostActionEdit(currUser,pid)
+    elif selection == '7':
+        logout(currUser)
+    else:
+        #if selection == 8
+        exitProgram(currUser)
+
 
 def generatePid():
     #generates a unique pid
@@ -526,19 +557,50 @@ def SearchForPosts(currUser):
     #lets a user search for posts
     global connection, cursor
     
-    keywords = input("Enter keywords to search for: ")
-    while len(textToMatch) < 0:
+    keywords = input("Enter keywords to search for a post: ")
+    while len(keywords) < 0:
         keywords = input("Please enter more than 0 keywords: ")
 
-    #displayLimit = 5
+    displayLimit = 5
 
-    #search_query = '''SELECT *, v.vno, SUM(a.pid) FROM posts p, tags t, votes v, answers a WHERE p.title LIKE ? OR p.body LIKE ? OR t.tag LIKE ?AND p.pid = t.pid AND p.pid= v.pid'''
-    #cursor.execute(search_query, (keywords, keywords,keywords,keywords, displayLimit))
+    search_query = '''SELECT * FROM posts p, tags t WHERE p.title LIKE ? OR p.body LIKE ? OR t.tag LIKE ? AND p.pid = t.pid LIMIT ?'''
+    cursor.execute(search_query, (keywords, keywords,keywords, displayLimit))
 
+    all_entry = cursor.fetchall()
+    for one_entry in all_entry:
+        print(one_entry)
+
+
+    
+    header = "| # | Option\n"
+    op1 = "| 1 | Display more posts\n"
+    op2 = "| 2 | Perform a post action\n"
+    b1 =  "______________________________________\n"
+
+    print("\n",header,op1,op2,b1)
+    selection = input("Make a selection from the menu by entering the option number: ")
+
+    while selection not in ['1', '2']:
+        print("Please enter a valid selection !")
+        selection = input("Make a selection from the menu by entering the option number: ")
+        
+    if selection == '1':
+        displayMorePosts() #for leah to do (remove post limit or let user set how many more posts they want to see) + re query
+    elif selection == '2':
+        pid = input("enter the post id you would like to perform an action on: ")
+
+        cursor.execute('SELECT * FROM posts p WHERE p.pid=?', (pid,))
+        while cursor.fetchone() is None:
+            pid = input("Please enter a valid post id: ")
+            cursor.execute('SELECT * FROM posts p WHERE p.pid=?', (pid,))
+        
+        displayPostActionMenu(currUser,pid)
+    
+
+    
     '''
     keyword either in title, body, or tag fields.
-    For each matching post,
-    in addition to the columns of posts table, the number of votes, and the
+    For each matching post, in addition to the columns of posts table, the number of votes, and the
     number of answers if the post is a question (or zero if the question has no answers)
     should be displayed. The result should be ordered based on the number of matching
     keywords with posts matching the largest number of keywords listed on top.
@@ -547,10 +609,8 @@ def SearchForPosts(currUser):
     The user should be able to select a post and perform a post action (as discussed next).
     '''
 
-    
-
-    
-        
+def displayMorePosts():
+    pass
     
 
 def PostActionAnswer(currUser, pid):
