@@ -576,7 +576,7 @@ def PostActionGiveABadge(currUser):
         bname = input("Enter a valid Badge(): ")
         cursor.execute("select bname from badges where bname=?",[bname])
         badge = cursor.fetchone()
-    cursor.execute("insert into ubadges uid, bdate, bname values (uid, date(now), bname)",{"uid":poster,"bname":bname})
+    cursor.execute("insert into ubadges uid, bdate, bname values (uid, date('now'), bname)",{"uid":poster,"bname":bname})
     cursor.commit()
     displayMenu(currUser)
 
