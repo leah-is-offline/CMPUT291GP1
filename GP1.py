@@ -25,6 +25,8 @@ class CurrentUser:
 def main():
     global connection, cursor
 
+    '''during demo DB will be passed through command line.
+    Okay to connect this way FOR NOW (generates db in CWD)'''
     path="./GP1DB.db"
     connect(path)
 
@@ -39,7 +41,6 @@ def main():
 
     #connection.close()
     #return
-    
 
 def connect(path):
     #function to connect to sqlite3 db
@@ -434,11 +435,30 @@ def generatePid():
         cursor.execute('SELECT pid FROM posts p WHERE p.pid =?', (pid,))
 
     return pid
-    
+
+
         
 def PostAQuestion(currUser):
     #lets user post a questions by
-    qid = generatePid()
+    pid = generatePid()
+
+    title = input("Enter a title for your question: ")
+    #https://www.tiaztikt.nl/derek-parfit-on-empty-questions-from-reasons-and-persons-1984/
+    while len(title) < 1:
+        title = input("\"An empty question has no answer\" - Derek Parfit(1984).\nEnter a valid title for your question: ")
+
+    #ASSUMPTION - the body does not need text as the question title may provide enough information.
+    body = input("Enter a body for your question(optional): ")
+    if len(body) < 1:
+        body = " "
+
+    #Insert values into posts table first, then into questions table.
+    cursor.execute("INSERT INTO posts(pid, pdate, title, body, poster) VALUES (?, date('now'),?,?,?);",(pid, title, body, currUser._uid))
+    cursor.execute("INSERT INTO questions(pid, theaid) VALUES (?, null);", (pid,))
+    connection.commit()
+
+    print("Question successfully posted.")
+
 
 def SearchForPosts(currUser):
     pass
