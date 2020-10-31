@@ -415,10 +415,30 @@ def displayMenu(currUser):
     else:
         #when selection == 10
         exitProgram(currUser)
-        
+
+def generatePid():
+    #generates a unique pid
+    global connection, cursor, pidNum
+
+    #normally post id should increase in chronological order
+    cursor.execute('SELECT COUNT(*) FROM posts;') #how many posts are there
+    pidNum = (cursor.fetchone()[0] + 1) #increase that value by 1
+    pid = ('p' + str(pidNum).zfill(3)) #python zfill pads the left with zeros until reaching the specified length(3). (operates on strings)
+
+    #BUT the test data could have completely random pids (not chronological) so increase pid value until pid is UNIQUE 
+    cursor.execute('SELECT pid FROM posts p WHERE p.pid =?', (pid,))
+    while cursor.fetchone() is not None:
+        pidNum += 1
+        pid = ('p' + str(pidNum).zfill(3))
+        print("pid was in DB. assigning new pid = ", pid)
+        cursor.execute('SELECT pid FROM posts p WHERE p.pid =?', (pid,))
+
+    return pid
+    
         
 def PostAQuestion(currUser):
-    pass
+    #lets user post a questions by
+    qid = generatePid()
 
 def SearchForPosts(currUser):
     pass
