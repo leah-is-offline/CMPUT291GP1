@@ -551,11 +551,25 @@ def PostAQuestion(currUser):
     connection.commit()
 
     print("Question successfully posted.")
+    return
 
 
 def SearchForPosts(currUser):
     #lets a user search for posts
     global connection, cursor
+
+    '''TO DO: OCTOBER 31 ---->
+            figure out how to write this query. finish function to let user display more results (just increase display limit and requery)
+
+    keywords either in title, body, or tag fields.
+    For each matching post, in addition to the columns of posts table, the number of votes, and the
+    number of answers if the post is a question (or zero if the question has no answers)
+    should be displayed. The result should be ordered based on the number of matching
+    keywords with posts matching the largest number of keywords listed on top.
+    If there are more than 5 matching posts, at most 5 matches will be
+    shown at a time, letting the user select a post or see more matches.
+    The user should be able to select a post and perform a post action (as discussed next).
+    '''
     
     keywords = input("Enter keywords to search for a post: ")
     while len(keywords) < 0:
@@ -597,20 +611,36 @@ def SearchForPosts(currUser):
         displayPostActionMenu(currUser,pid)
     
 
-    
-    '''
-    keyword either in title, body, or tag fields.
-    For each matching post, in addition to the columns of posts table, the number of votes, and the
-    number of answers if the post is a question (or zero if the question has no answers)
-    should be displayed. The result should be ordered based on the number of matching
-    keywords with posts matching the largest number of keywords listed on top.
-    If there are more than 5 matching posts, at most 5 matches will be
-    shown at a time, letting the user select a post or see more matches.
-    The user should be able to select a post and perform a post action (as discussed next).
-    '''
-
 def PostActionAnswer(currUser, pid):
-    pass
+    #function to let a user post an answer to a question, if the post selected is a question
+    global connection, cursor
+
+    cursor.execute('SELECT * FROM posts p, questions q WHERE q.pid = p.pid AND p.pid = ?', (pid,))
+    while cursor.fetchone() is None:
+            print("The post you selected is not a question\n")
+            pid = input("Please enter a valid post id of a question: ")
+            cursor.execute('SELECT * FROM posts p, questions q WHERE q.pid = p.pid AND p.pid = ?', (pid,))
+
+    qid = pid
+    pid = generatePid()
+
+    title = input("Enter the title for your answer: ")
+    while len(title) < 1:
+        title = input("Your answer must have a title.\nEnter a valid title for your answer: ")
+
+    #ASSUMPTION - the body does not need text as the answer title may provide enough information.
+    body = input("Enter a body for your answer(optional): ")
+    if len(body) < 1:
+        body = " "
+
+    #Insert values into posts table first, then into answers table.
+    cursor.execute("INSERT INTO posts(pid, pdate, title, body, poster) VALUES (?, date('now'),?,?,?);",(pid, title, body, currUser._uid))
+    cursor.execute("INSERT INTO answers(pid, qid) VALUES (?,?);", (pid,qid))
+
+    connection.commit()
+    print("Answer successfully posted.")
+    return
+
 
 def PostActionVote(currUser):
     pass
