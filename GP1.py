@@ -430,15 +430,25 @@ def PostActionVote(currUser):
     pass
 
 def PostActionMarkAsTheAccepted(currUser):
-    pass
+    pid = input("Enter an answer pid: ")
+    cursor.execute("select * from answers where pid=?;",[pid])
+    post = cursor.fetchone()
+    cursor.execute("select * from questions where pid=?",[post[1]])
+    question = cursor.fetchone()
+    cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
+    displayMenu(currUser)
 
 def PostActionGiveABadge(currUser):
-    pass
+    pid = input("Enter a post pid: ")
+
+    displayMenu(currUser)
 
 def PostActionAddATag(currUser):
-    pass
+    pid = input("Enter a post pid: ")
+    displayMenu(currUser)
 
 def PostActionEdit(currUser):
-    pass
+    pid = input("Enter a post pid: ")
+    displayMenu(currUser)
 
 main()
