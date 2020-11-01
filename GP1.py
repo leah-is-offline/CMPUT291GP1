@@ -694,7 +694,7 @@ def PostActionAnswer(currUser, pid):
     print("Answer successfully posted.")
     displayEndPostActionMenu(currUser)
 
-def PostActionVote(currUser):
+def PostActionVote(currUser, pid):
     #function to let a user vote on a post, if they have not voted on it yet
     global connection, cursor
     cursor.execute('SELECT * FROM votes WHERE uid = ? AND pid = ?;', (currUser._uid, pid))
@@ -723,7 +723,7 @@ def PostActionMarkAsTheAccepted(currUser, pid):
     question = cursor.fetchone()
     cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
     cursor.commit()
-    displayMenu(currUser)
+    displayEndPostActionMenu(currUser)
 
 def PostActionGiveABadge(currUser, pid):
     cursor.execute("select * from posts where pid=?;",[pid])
@@ -738,7 +738,7 @@ def PostActionGiveABadge(currUser, pid):
         badge = cursor.fetchone()
     cursor.execute("insert into ubadges uid, bdate, bname values (uid, date('now'), bname)",{"uid":poster,"bname":bname})
     cursor.commit()
-    displayMenu(currUser)
+    displayEndPostActionMenu(currUser)
 
 def PostActionAddATag(currUser, pid):
     tag = input("Enter a tag: ")
@@ -750,7 +750,7 @@ def PostActionAddATag(currUser, pid):
         duplicate = cursor.fetchone()
     cursor.execute("insert into tags (pid, tag) values (?, ?)", (pid, tag))
     cursor.commit()
-    displayMenu(currUser)
+    displayEndPostActionMenu(currUser)
 
 
 def PostActionEdit(currUser, pid):
@@ -758,6 +758,18 @@ def PostActionEdit(currUser, pid):
     post = cursor.fetchone()
     title = input("Enter new title(blank for no change): ")
     body = input("Enter new body(blank for no change): ")
+    if title and body:
+        cursor.execute("update posts set (title=:t, body=:b) where pid=:p",{"t":title,"b":body,"p":post[0]})
+    elif title:
+        cursor.execute("update posts set title=:t where pid=:p",{"t":title,"p":post[0]})
+    elif body:
+        cursor.execute("update posts set (body=:b) where pid=:p",{"b":body,"p":post[0]})
+    else:
+        displayEndPostActionMenu(currUser)
+        return
+    cursor.commit()
+    displayEndPostActionMenu(currUser)
+    
 
 def displayMorePosts():
     pass
