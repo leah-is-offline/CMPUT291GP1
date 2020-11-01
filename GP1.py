@@ -526,7 +526,29 @@ def generatePid():
 
     return pid
 
+def displayEndPostActionMenu(currUser):
+    #function to display the menu that should appear everytime a post action is finished
 
+    header = "| # | Option\n"
+    op1 = "| 1 | Back to main menu\n"
+    op2 = "| 2 | Logout\n"
+    op3 = "| 3 | Exit\n"
+    b1 =  "______________________________________\n"
+
+    print("\n",header,op1,op2,op3,b1)
+    selection = input("Make a selection from the menu by entering the option number: ")
+
+    while selection not in ['1','2','3']:
+        print("Please enter a valid selection !")
+        selection = input("Make a selection from the menu by entering the option number: ")
+
+    if selection == '1':
+        displayMenu(currUser)
+    elif selection == '2':
+        logout(currUser)
+    else:
+        exitProgram(currUser)
+    
         
 def PostAQuestion(currUser):
     #lets user post a questions by
@@ -548,15 +570,16 @@ def PostAQuestion(currUser):
     #Insert values into posts table first, then into questions table.
     cursor.execute("INSERT INTO posts(pid, pdate, title, body, poster) VALUES (?, date('now'),?,?,?);",(pid, title, body, currUser._uid))
     cursor.execute("INSERT INTO questions(pid, theaid) VALUES (?, null);", (pid,))
-    connection.commit()
 
+    connection.commit()
     print("Question successfully posted.")
-    return
+    displayEndPostActionMenu(currUser)
+
 
 
 def SearchForPosts(currUser):
     #lets a user search for posts
-    global connection, cursor
+    global connection, cursor, displayLimit
 
     '''TO DO: OCTOBER 31 ---->
             figure out how to write this query. finish function to let user display more results (just increase display limit and requery)
@@ -590,12 +613,13 @@ def SearchForPosts(currUser):
     header = "| # | Option\n"
     op1 = "| 1 | Display more posts\n"
     op2 = "| 2 | Perform a post action\n"
+    op3 = "| 3 | Back to main menu\n"
     b1 =  "______________________________________\n"
 
-    print("\n",header,op1,op2,b1)
+    print("\n",header,op1,op2,op3,b1)
     selection = input("Make a selection from the menu by entering the option number: ")
 
-    while selection not in ['1', '2']:
+    while selection not in ['1', '2','3']:
         print("Please enter a valid selection !")
         selection = input("Make a selection from the menu by entering the option number: ")
         
@@ -611,6 +635,8 @@ def SearchForPosts(currUser):
             cursor.execute('SELECT * FROM posts p WHERE p.pid=?;', (pid,))
         
         displayPostActionMenu(currUser,pid)
+    else:
+        displayMenu(currUser)
     
 
 def PostActionAnswer(currUser, pid):
@@ -641,7 +667,7 @@ def PostActionAnswer(currUser, pid):
 
     connection.commit()
     print("Answer successfully posted.")
-    return
+    displayEndPostActionMenu(currUser)
 
 
 def PostActionVote(currUser,pid):
@@ -660,11 +686,12 @@ def PostActionVote(currUser,pid):
     cursor.execute('SELECT COUNT(vno) FROM votes WHERE pid = ?;',(pid,))
     vno = (cursor.fetchone()[0] + 1)
 
+    #insert values into votes table
     cursor.execute("INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?);",(pid,vno,currUser._uid))
 
     connection.commit()
     print("Post successfully voted on.")
-    return
+    displayEndPostActionMenu(currUSer)
 
 
 def PostActionMarkAsTheAccepted(currUser,pid):
