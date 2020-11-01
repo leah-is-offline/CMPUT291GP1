@@ -733,37 +733,43 @@ def PostActionGiveABadge(currUser, pid):
     cursor.execute("select bname from badges where bname=?",[bname])
     badge = cursor.fetchone()
     while badge is None:
-        bname = input("Enter a valid badge(): ")
+        bname = input("Enter a valid badge(blank to cancel): ")
         cursor.execute("select bname from badges where bname=?",[bname])
         badge = cursor.fetchone()
-    cursor.execute("insert into ubadges uid, bdate, bname values (uid, date('now'), bname)",{"uid":poster,"bname":bname})
-    cursor.commit()
-    displayEndPostActionMenu(currUser)
+        if bname == "":
+            break
+    if bname:
+        cursor.execute("insert into ubadges uid, bdate, bname values (uid, date('now'), bname)",{"uid":poster,"bname":bname})
+        cursor.commit()
+        displayEndPostActionMenu(currUser)
+    else:
+        displayEndPostActionMenu(currUser)
 
 def PostActionAddATag(currUser, pid):
     tag = input("Enter a tag: ")
     cursor.execute("select * from tags where pid=:a and tag=:b", {"a":pid, "b":tag})
     duplicate = cursor.fetchone()
     while duplicate:
-        tag = input("Enter a new tag: ")
+        tag = input("Enter a new tag(blank to cancel): ")
         cursor.execute("select * from tags where pid=:a and tag=:b", {"a":pid, "b":tag})
         duplicate = cursor.fetchone()
-    cursor.execute("insert into tags (pid, tag) values (?, ?)", (pid, tag))
-    cursor.commit()
-    displayEndPostActionMenu(currUser)
+    if tag:
+        cursor.execute("insert into tags (pid, tag) values (?, ?)", (pid, tag))
+        cursor.commit()
+        displayEndPostActionMenu(currUser)
+    else:
+        displayEndPostActionMenu(currUser)
 
 
 def PostActionEdit(currUser, pid):
-    cursor.execute("select * from posts where pid=?;",[pid])
-    post = cursor.fetchone()
     title = input("Enter new title(blank for no change): ")
     body = input("Enter new body(blank for no change): ")
     if title and body:
-        cursor.execute("update posts set (title=:t, body=:b) where pid=:p",{"t":title,"b":body,"p":post[0]})
+        cursor.execute("update posts set (title=:t, body=:b) where pid=:p",{"t":title,"b":body,"p":pid})
     elif title:
-        cursor.execute("update posts set title=:t where pid=:p",{"t":title,"p":post[0]})
+        cursor.execute("update posts set title=:t where pid=:p",{"t":title,"p":pid})
     elif body:
-        cursor.execute("update posts set (body=:b) where pid=:p",{"b":body,"p":post[0]})
+        cursor.execute("update posts set (body=:b) where pid=:p",{"b":body,"p":pid})
     else:
         displayEndPostActionMenu(currUser)
         return
