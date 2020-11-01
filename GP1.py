@@ -508,11 +508,11 @@ def displayPostActionMenu(currUser,pid):
 
 
 def generatePid():
-    #generates a unique pid
+    #function to generates a unique pid
     global connection, cursor, pidNum
 
     #normally post id should increase in chronological order
-    cursor.execute('SELECT COUNT(*) FROM posts;') #how many posts are there
+    cursor.execute('SELECT COUNT(pid) FROM posts;') #how many posts are there
     pidNum = (cursor.fetchone()[0] + 1) #increase that value by 1
     pid = ('p' + str(pidNum).zfill(3)) #python zfill pads the left with zeros until reaching the specified length(3). (operates on strings)
 
@@ -526,11 +526,33 @@ def generatePid():
 
     return pid
 
+def displayEndPostActionMenu(currUser):
+    #function to display the menu that should appear everytime a post action is finished
 
+    header = "| # | Option\n"
+    op1 = "| 1 | Back to main menu\n"
+    op2 = "| 2 | Logout\n"
+    op3 = "| 3 | Exit\n"
+    b1 =  "______________________________________\n"
+
+    print("\n",header,op1,op2,op3,b1)
+    selection = input("Make a selection from the menu by entering the option number: ")
+
+    while selection not in ['1','2','3']:
+        print("Please enter a valid selection !")
+        selection = input("Make a selection from the menu by entering the option number: ")
+
+    if selection == '1':
+        displayMenu(currUser)
+    elif selection == '2':
+        logout(currUser)
+    else:
+        exitProgram(currUser)
+    
         
 def PostAQuestion(currUser):
-    #lets user post a questions by
-    pid = generatePid()
+    #function to let a user post a question
+    global connection, cursor
 
     title = input("Enter a title for your question: ")
     #https://www.tiaztikt.nl/derek-parfit-on-empty-questions-from-reasons-and-persons-1984/
@@ -545,42 +567,73 @@ def PostAQuestion(currUser):
     if len(body) < 1:
         body = " "
 
+    pid = generatePid()
+
     #Insert values into posts table first, then into questions table.
     cursor.execute("INSERT INTO posts(pid, pdate, title, body, poster) VALUES (?, date('now'),?,?,?);",(pid, title, body, currUser._uid))
     cursor.execute("INSERT INTO questions(pid, theaid) VALUES (?, null);", (pid,))
-    connection.commit()
 
+    connection.commit()
     print("Question successfully posted.")
+    displayEndPostActionMenu(currUser)
+
+def countMatches(keywords):
+    global connection, cursor
+
+    vals = {}
+    
+    for key in keywords:
+        cursor.execute('SELECT pid FROM posts p WHERE p.title LIKE ? OR p.body LIKE ?;',(key,))
+        cursor.execute('SELECT pid FROM tags t WHERE t.tag LIKE ?;'(key,))
 
 
 def SearchForPosts(currUser):
     #lets a user search for posts
-    global connection, cursor
+    global connection, cursor, displayLimit
+
+    connection.create_function('countMatches', 1, countMatches)
+
+
+    '''SELECT  p.pid, p.pdate, p.title, p.body, p.poster, ifnull(COUNT(v.vno),0), COUNT(a.qid)
+    FROM posts p LEFT OUTER JOIN votes v ON v.pid = p.pid LEFT OUTER JOIN answers a ON p.pid = a.qid
+    GROUP BY p.pid;'''
+
+
+    '''ORDER BY COUNT(countMatches(pid))'''
+    '''LIMIT displayLimit'''
+
+
+    '''TO DO: OCTOBER 31 ---->
+
+    keywords either in title, body, or tag fields. NOT DONE
+    display columns of posts table, the number of votes, and the number of answers if the post is a question (or zero if the question has no answers) DONE
+    The result should be ordered based on the number of matching keywords with posts matching the largest number of keywords listed on top. NOT DONE
+    If there are more than 5 matching posts, at most 5 matches will be shown at a time, letting the user select a post or see more matches. DONE
+    The user should be able to select a post and perform a post action (as discussed next). DONE
+    '''
+
+    displayLimit = 5
     
-    keywords = input("Enter keywords to search for a post: ")
+    keywords = input("Enter keywords to search for a post (separated by a space): ")
     while len(keywords) < 0:
         keywords = input("Please enter more than 0 keywords: ")
 
-    displayLimit = 5
-
-    search_query = '''SELECT * FROM posts p, tags t WHERE p.title LIKE ? OR p.body LIKE ? OR t.tag LIKE ? AND p.pid = t.pid LIMIT ?'''
-    cursor.execute(search_query, (keywords, keywords,keywords, displayLimit))
-
-    all_entry = cursor.fetchall()
-    for one_entry in all_entry:
-        print(one_entry)
-
+    keywords = list(keywords.split(" "))
+    print(keywords)
+    #countMatches(keywords)
+    
 
     
     header = "| # | Option\n"
     op1 = "| 1 | Display more posts\n"
     op2 = "| 2 | Perform a post action\n"
+    op3 = "| 3 | Back to main menu\n"
     b1 =  "______________________________________\n"
 
-    print("\n",header,op1,op2,b1)
+    print("\n",header,op1,op2,op3,b1)
     selection = input("Make a selection from the menu by entering the option number: ")
 
-    while selection not in ['1', '2']:
+    while selection not in ['1', '2','3']:
         print("Please enter a valid selection !")
         selection = input("Make a selection from the menu by entering the option number: ")
         
@@ -595,6 +648,8 @@ def SearchForPosts(currUser):
             cursor.execute('SELECT * FROM posts p WHERE p.pid=?', (pid,))
         
         displayPostActionMenu(currUser,pid)
+    else:
+        displayMenu(currUser)
     
 
     
@@ -637,7 +692,7 @@ def PostActionAnswer(currUser, pid):
 
     connection.commit()
     print("Answer successfully posted.")
-    return
+    displayEndPostActionMenu(currUser)
 
 def PostActionVote(currUser):
     #function to let a user vote on a post, if they have not voted on it yet
@@ -650,15 +705,16 @@ def PostActionVote(currUser):
 
 
     "vno assigned by your system"
-    #ASSUMPTION - vno is a variable that is counting the number of votes, independent of whether or not the vote was up or down.
+    #"All votes in the project are upvotes (downvotes are not considered)."
     cursor.execute('SELECT COUNT(vno) FROM votes WHERE pid = ?;',(pid,))
     vno = (cursor.fetchone()[0] + 1)
 
+    #insert values into votes table
     cursor.execute("INSERT INTO votes (pid, vno, vdate, uid) VALUES (?,?,date('now'),?);",(pid,vno,currUser._uid))
 
     connection.commit()
     print("Post successfully voted on.")
-    return
+    displayEndPostActionMenu(currUser)
 
 def PostActionMarkAsTheAccepted(currUser, pid):
     cursor.execute("select * from answers where pid=?;",[pid])
