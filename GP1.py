@@ -6,6 +6,7 @@ import sys
 
 connection = None
 cursor = None
+matches = None
 
 
 #this class will be used to reference the singleton user and get their uid.
@@ -32,9 +33,9 @@ def main():
 
     '''dont need to run the three following commands every run
     just to instantiate the db and define the tables '''
-    dropTables() 
-    defineTables()
-    insertData()
+    #dropTables() 
+    #defineTables()
+    #insertData()
 
     currUser = CurrentUser() 
     homeScreen(currUser)
@@ -526,6 +527,7 @@ def generatePid():
 
     return pid
 
+
 def displayEndPostActionMenu(currUser):
     #function to display the menu that should appear everytime a post action is finished
 
@@ -579,11 +581,11 @@ def PostAQuestion(currUser):
 
 def countMatches(keywords):
     #function that counts unique matches (in title,body,or post tag) per keyword provided by user. 
-    global connection, cursor
+    global connection, cursor, matches
 
     matches = {}
 
-    #initialize matches to 0 for all posts
+    #initialize matches to 0 for all posts (integer so we can increase count)
     cursor.execute("SELECT pid FROM posts;")
     pids = cursor.fetchall()
     if pids is not None:
@@ -591,58 +593,82 @@ def countMatches(keywords):
             matches[pid[0]] = 0
 
     #increase count of matches per pid of keyword
+    #keywords either in title, body, or tag fields as per spec
     for key in keywords:
-        key = "%" + key + "%"
-    
+        key = "%" + key + "%" #add wildcard operators to keyword
         cursor.execute("SELECT DISTINCT(p.pid) FROM posts p LEFT JOIN tags t ON p.pid = t.pid WHERE p.title LIKE ? OR p.body LIKE ? OR t.tag LIKE ?;",(key,key,key))
         pids = cursor.fetchall()
         if pids is not None:
             for pid in pids:
                 matches[pid[0]] += 1
 
-    return matches
+
+def getMatches(pid):
+    #function to return how many matches a pid has in the list of provided keywords
+    global matches
+    
+    return matches[pid]
+
+def executeSearchQuery(displayLimit):
+    #function to execute search query, provided with user defined limit
+    #recall that cursor and connection are global in scope of program
+    global connection, cursor
 
 
+    #columns of posts table, number of votes, number of answers if post is a question(0 if no answers)
+    #order based on the number of matching keywords (posts matching largest number of keywords on top
+    #at most 5 matches shown at a time, user can
+    search_query = '''SELECT  p.pid, p.pdate, p.title, p.body, p.poster, ifnull(COUNT(v.vno),0), COUNT(a.qid), getMatches(p.pid)
+    FROM posts p LEFT OUTER JOIN votes v ON v.pid = p.pid LEFT OUTER JOIN answers a ON p.pid = a.qid
+    LEFT OUTER JOIN (SELECT pid, getMatches(pid) as matches FROM posts) matchTbl ON matchTbl.pid = p.pid
+    GROUP BY p.pid, p.pdate, p.title, p.body, p.poster
+    ORDER BY matches DESC
+    LIMIT ?;'''
+
+    cursor.execute(search_query, (displayLimit,))
+
+    #display the results
+    results = cursor.fetchall()
+    if results is not None:
+        for result in results:
+            print(result)
+    else:
+        print("There were no matches for your keywords")
+
+
+    return
 
 def SearchForPosts(currUser):
     #lets a user search for posts
-    global connection, cursor, displayLimit
+    global connection, cursor, matches
 
-    connection.create_function('countMatches', 1, countMatches)
-
-
-    '''SELECT  p.pid, p.pdate, p.title, p.body, p.poster, ifnull(COUNT(v.vno),0), COUNT(a.qid)
-    FROM posts p LEFT OUTER JOIN votes v ON v.pid = p.pid LEFT OUTER JOIN answers a ON p.pid = a.qid
-    GROUP BY p.pid, p.pdate, p.title, p.body, p.poster;'''
-
-
-    '''getMatches(pid) as matches'''
-    '''ORDER BY matches'''
-    '''LIMIT displayLimit'''
-
-
-    '''TO DO: OCTOBER 31 ---->
-
-    keywords either in title, body, or tag fields. DONE
-    display columns of posts table, the number of votes, and the number of answers if the post is a question (or zero if the question has no answers) DONE
-    The result should be ordered based on the number of matching keywords with posts matching the largest number of keywords listed on top. NOT DONE
-    If there are more than 5 matching posts, at most 5 matches will be shown at a time, letting the user select a post or see more matches. DONE
-    The user should be able to select a post and perform a post action (as discussed next). DONE
-    '''
 
     displayLimit = 5
     
     keywords = input("Enter keywords to search for a post (separated by a space): ")
     while len(keywords) < 0:
         keywords = input("Please enter more than 0 keywords: ")
-
     keywords = list(keywords.split(" "))
-    print(keywords)
 
+
+    #initiliaze the dictionary containing pids and their corresponding matches to keywords
     countMatches(keywords)
     
-
+    #initialize a list containing only pids that matched at least one keyword
+    pidMatches = []
+    for key in matches.keys():
+        if matches[key] != 0:
+            pidMatches.append(key)
     
+
+    #initialize user defined function
+    connection.create_function('getMatches', 1, getMatches)
+
+    #execute searchy query
+    executeSearchQuery(displayLimit)
+    
+
+    #letting the user select a post or see more matches.    
     header = "| # | Option\n"
     op1 = "| 1 | Display more posts\n"
     op2 = "| 2 | Perform a post action\n"
@@ -657,31 +683,22 @@ def SearchForPosts(currUser):
         selection = input("Make a selection from the menu by entering the option number: ")
         
     if selection == '1':
-        displayMorePosts() #for leah to do (remove post limit or let user set how many more posts they want to see) + re query
+        #display 5 more posts from the search query
+        displayLimit += 5
+        executeSearchQuery(displayLimit) 
     elif selection == '2':
+        #navigate to post action menu after user provides post id
         pid = input("enter the post id you would like to perform an action on: ")
-
         cursor.execute('SELECT * FROM posts p WHERE p.pid=?', (pid,))
         while cursor.fetchone() is None:
             pid = input("Please enter a valid post id: ")
             cursor.execute('SELECT * FROM posts p WHERE p.pid=?', (pid,))
-        
         displayPostActionMenu(currUser,pid)
     else:
+        #back to main menu
         displayMenu(currUser)
     
 
-    
-    '''
-    keyword either in title, body, or tag fields.
-    For each matching post, in addition to the columns of posts table, the number of votes, and the
-    number of answers if the post is a question (or zero if the question has no answers)
-    should be displayed. The result should be ordered based on the number of matching
-    keywords with posts matching the largest number of keywords listed on top.
-    If there are more than 5 matching posts, at most 5 matches will be
-    shown at a time, letting the user select a post or see more matches.
-    The user should be able to select a post and perform a post action (as discussed next).
-    '''
 
 def PostActionAnswer(currUser, pid):
     #function to let a user post an answer to a question, if the post selected is a question
@@ -796,7 +813,5 @@ def PostActionEdit(currUser, pid):
     displayEndPostActionMenu(currUser)
     
 
-def displayMorePosts():
-    pass
 
 main()
