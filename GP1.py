@@ -579,6 +579,8 @@ def PostAQuestion(currUser):
     print("Question successfully posted.")
     displayEndPostActionMenu(currUser)
 
+
+
 def countMatches(keywords):
     #function that counts unique matches (in title,body,or post tag) per keyword provided by user. 
     global connection, cursor, matches
@@ -603,16 +605,23 @@ def countMatches(keywords):
                 matches[pid[0]] += 1
 
 
+
 def getMatches(pid):
     #function to return how many matches a pid has in the list of provided keywords
     global matches
     
     return matches[pid]
 
-def executeSearchQuery(displayLimit, pidMatches):
+def executeSearchQuery(displayLimit, currUser):
     #function to execute search query, provided with user defined limit
     #recall that cursor and connection are global in scope of program
-    global connection, cursor
+    global connection, cursor, matches
+
+    #initialize a list containing only pids that matched at least one keyword
+    pidMatches = []
+    for key in matches.keys():
+        if matches[key] != 0:
+            pidMatches.append(key)
 
     placeholder = '?'
     placeholders = ', '.join([placeholder] * len(pidMatches))
@@ -620,21 +629,18 @@ def executeSearchQuery(displayLimit, pidMatches):
 
     #columns of posts table, number of votes, number of answers if post is a question(0 if no answers)
     #order based on the number of matching keywords (posts matching largest number of keywords on top
-    #at most 5 matches shown at a time, user can
-    search_query = '''SELECT  p.pid, p.pdate, p.title, p.body, p.poster, ifnull(COUNT(v.vno),0), COUNT(a.qid), getMatches(p.pid)
-    FROM posts p LEFT OUTER JOIN votes v ON v.pid = p.pid LEFT OUTER JOIN answers a ON p.pid = a.qid
-    LEFT OUTER JOIN (SELECT pid, getMatches(pid) as matches FROM posts) matchTbl ON matchTbl.pid = p.pid
-    WHERE p.pid IN (%s)
-    GROUP BY p.pid, p.pdate, p.title, p.body, p.poster
-    ORDER BY matches DESC
-    LIMIT ?;''' % placeholders
+    #at most 5 matches shown at a time
+    search_query = '''
+                    SELECT  p.pid, p.pdate, p.title, p.body, p.poster, ifnull(COUNT(v.vno),0), COUNT(a.qid)
+                    FROM posts p LEFT OUTER JOIN votes v ON v.pid = p.pid LEFT OUTER JOIN answers a ON p.pid = a.qid
+                    LEFT OUTER JOIN (SELECT pid, getMatches(pid) as matches FROM posts) matchTbl ON matchTbl.pid = p.pid
+                    WHERE p.pid IN (%s)
+                    GROUP BY p.pid, p.pdate, p.title, p.body, p.poster
+                    ORDER BY matches DESC
+                    LIMIT ?;'''% placeholders
     
-
     pidMatches.append(displayLimit)
-    data = tuple(pidMatches)
-    print(data)
-    
-    cursor.execute(search_query, data)
+    cursor.execute(search_query, pidMatches) #when passing in a list of values, no brackets. 
 
     #display the results
     results = cursor.fetchall()
@@ -644,39 +650,39 @@ def executeSearchQuery(displayLimit, pidMatches):
     else:
         print("There were no matches for your keywords")
 
-    return
+
+    displayEndSearchMenu(displayLimit, currUser)
 
 
 def SearchForPosts(currUser):
     #lets a user search for posts
-    global connection, cursor, matches
+    global connection, cursor, matches, pidMatches
 
+    #default display limit
+    displayLimit = 5 
 
-    displayLimit = 5
-    
+    #get keywords from user
     keywords = input("Enter keywords to search for a post (separated by a space): ")
     while len(keywords) < 0:
         keywords = input("Please enter more than 0 keywords: ")
     keywords = list(keywords.split(" "))
 
-
-    #initiliaze the dictionary containing pids and their corresponding matches to keywords
+    #initiliaze the GLOBAL dictionary containing pids and their corresponding matches to keywords
     countMatches(keywords)
     
-    #initialize a list containing only pids that matched at least one keyword
-    pidMatches = []
-    for key in matches.keys():
-        if matches[key] != 0:
-            pidMatches.append(key)
-    
-
     #initialize user defined function
     connection.create_function('getMatches', 1, getMatches)
-
+    
     #execute searchy query
-    executeSearchQuery(displayLimit, pidMatches)
+    executeSearchQuery(displayLimit, currUser)
+
+    displayEndSearchMenu(displayLimit,currUser)
     
 
+def displayEndSearchMenu(displayLimit, currUser):
+    #funtion to diplay the menu after a search is performed
+    global connection, cursor
+    
     #letting the user select a post or see more matches.    
     header = "| # | Option\n"
     op1 = "| 1 | Display more posts\n"
@@ -694,7 +700,7 @@ def SearchForPosts(currUser):
     if selection == '1':
         #display 5 more posts from the search query
         displayLimit += 5
-        executeSearchQuery(displayLimit,pidMatches) 
+        executeSearchQuery(displayLimit, currUser) 
     elif selection == '2':
         #navigate to post action menu after user provides post id
         pid = input("enter the post id you would like to perform an action on: ")
@@ -707,7 +713,6 @@ def SearchForPosts(currUser):
         #back to main menu
         displayMenu(currUser)
     
-
 
 def PostActionAnswer(currUser, pid):
     #function to let a user post an answer to a question, if the post selected is a question
