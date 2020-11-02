@@ -578,13 +578,30 @@ def PostAQuestion(currUser):
     displayEndPostActionMenu(currUser)
 
 def countMatches(keywords):
+    #function that counts unique matches (in title,body,or post tag) per keyword provided by user. 
     global connection, cursor
 
-    vals = {}
-    
+    matches = {}
+
+    #initialize matches to 0 for all posts
+    cursor.execute("SELECT pid FROM posts;")
+    pids = cursor.fetchall()
+    if pids is not None:
+        for pid in pids:
+            matches[pid[0]] = 0
+
+    #increase count of matches per pid of keyword
     for key in keywords:
-        cursor.execute('SELECT pid FROM posts p WHERE p.title LIKE ? OR p.body LIKE ?;',(key,))
-        cursor.execute('SELECT pid FROM tags t WHERE t.tag LIKE ?;'(key,))
+        key = "%" + key + "%"
+    
+        cursor.execute("SELECT DISTINCT(p.pid) FROM posts p LEFT JOIN tags t ON p.pid = t.pid WHERE p.title LIKE ? OR p.body LIKE ? OR t.tag LIKE ?;",(key,key,key))
+        pids = cursor.fetchall()
+        if pids is not None:
+            for pid in pids:
+                matches[pid[0]] += 1
+
+    return matches
+
 
 
 def SearchForPosts(currUser):
@@ -596,16 +613,17 @@ def SearchForPosts(currUser):
 
     '''SELECT  p.pid, p.pdate, p.title, p.body, p.poster, ifnull(COUNT(v.vno),0), COUNT(a.qid)
     FROM posts p LEFT OUTER JOIN votes v ON v.pid = p.pid LEFT OUTER JOIN answers a ON p.pid = a.qid
-    GROUP BY p.pid;'''
+    GROUP BY p.pid, p.pdate, p.title, p.body, p.poster;'''
 
 
-    '''ORDER BY COUNT(countMatches(pid))'''
+    '''getMatches(pid) as matches'''
+    '''ORDER BY matches'''
     '''LIMIT displayLimit'''
 
 
     '''TO DO: OCTOBER 31 ---->
 
-    keywords either in title, body, or tag fields. NOT DONE
+    keywords either in title, body, or tag fields. DONE
     display columns of posts table, the number of votes, and the number of answers if the post is a question (or zero if the question has no answers) DONE
     The result should be ordered based on the number of matching keywords with posts matching the largest number of keywords listed on top. NOT DONE
     If there are more than 5 matching posts, at most 5 matches will be shown at a time, letting the user select a post or see more matches. DONE
@@ -620,7 +638,8 @@ def SearchForPosts(currUser):
 
     keywords = list(keywords.split(" "))
     print(keywords)
-    #countMatches(keywords)
+
+    countMatches(keywords)
     
 
     
