@@ -32,9 +32,9 @@ def main():
 
     '''dont need to run the three following commands every run
     just to instantiate the db and define the tables '''
-    #dropTables() 
-    #defineTables()
-    #insertData()
+    dropTables() 
+    defineTables()
+    insertData()
 
     currUser = CurrentUser() 
     homeScreen(currUser)
@@ -657,20 +657,31 @@ def SearchForPosts(currUser):
         selection = input("Make a selection from the menu by entering the option number: ")
         
     if selection == '1':
-        displayLimit += 5
-        #for leah to do (remove post limit or let user set how many more posts they want to see) + re query
+        displayMorePosts() #for leah to do (remove post limit or let user set how many more posts they want to see) + re query
     elif selection == '2':
         pid = input("enter the post id you would like to perform an action on: ")
 
-        cursor.execute('SELECT * FROM posts p WHERE p.pid=?;', (pid,))
+        cursor.execute('SELECT * FROM posts p WHERE p.pid=?', (pid,))
         while cursor.fetchone() is None:
             pid = input("Please enter a valid post id: ")
-            cursor.execute('SELECT * FROM posts p WHERE p.pid=?;', (pid,))
+            cursor.execute('SELECT * FROM posts p WHERE p.pid=?', (pid,))
         
         displayPostActionMenu(currUser,pid)
     else:
         displayMenu(currUser)
     
+
+    
+    '''
+    keyword either in title, body, or tag fields.
+    For each matching post, in addition to the columns of posts table, the number of votes, and the
+    number of answers if the post is a question (or zero if the question has no answers)
+    should be displayed. The result should be ordered based on the number of matching
+    keywords with posts matching the largest number of keywords listed on top.
+    If there are more than 5 matching posts, at most 5 matches will be
+    shown at a time, letting the user select a post or see more matches.
+    The user should be able to select a post and perform a post action (as discussed next).
+    '''
 
 def PostActionAnswer(currUser, pid):
     #function to let a user post an answer to a question, if the post selected is a question
@@ -702,11 +713,9 @@ def PostActionAnswer(currUser, pid):
     print("Answer successfully posted.")
     displayEndPostActionMenu(currUser)
 
-
-def PostActionVote(currUser,pid):
+def PostActionVote(currUser, pid):
     #function to let a user vote on a post, if they have not voted on it yet
     global connection, cursor
-
     cursor.execute('SELECT * FROM votes WHERE uid = ? AND pid = ?;', (currUser._uid, pid))
     while cursor.fetchone() is not None:
             print("You have already voted on this post\n")
@@ -726,19 +735,68 @@ def PostActionVote(currUser,pid):
     print("Post successfully voted on.")
     displayEndPostActionMenu(currUser)
 
+def PostActionMarkAsTheAccepted(currUser, pid):
+    cursor.execute("select * from answers where pid=?;",[pid])
+    post = cursor.fetchone()
+    cursor.execute("select * from questions where pid=?",[post[1]])
+    question = cursor.fetchone()
+    cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
+    cursor.commit()
+    displayEndPostActionMenu(currUser)
 
-def PostActionMarkAsTheAccepted(currUser,pid):
+def PostActionGiveABadge(currUser, pid):
+    cursor.execute("select * from posts where pid=?;",[pid])
+    post = cursor.fetchone()
+    poster = post[4]
+    bname = input("Enter a badge: ")
+    cursor.execute("select bname from badges where bname=?",[bname])
+    badge = cursor.fetchone()
+    while badge is None:
+        bname = input("Enter a valid badge(blank to cancel): ")
+        cursor.execute("select bname from badges where bname=?",[bname])
+        badge = cursor.fetchone()
+        if bname == "":
+            break
+    if bname:
+        cursor.execute("insert into ubadges uid, bdate, bname values (uid, date('now'), bname)",{"uid":poster,"bname":bname})
+        cursor.commit()
+        displayEndPostActionMenu(currUser)
+    else:
+        displayEndPostActionMenu(currUser)
+
+def PostActionAddATag(currUser, pid):
+    tag = input("Enter a tag: ")
+    cursor.execute("select * from tags where pid=:a and tag=:b", {"a":pid, "b":tag})
+    duplicate = cursor.fetchone()
+    while duplicate:
+        tag = input("Enter a new tag(blank to cancel): ")
+        cursor.execute("select * from tags where pid=:a and tag=:b", {"a":pid, "b":tag})
+        duplicate = cursor.fetchone()
+    if tag:
+        cursor.execute("insert into tags (pid, tag) values (?, ?)", (pid, tag))
+        cursor.commit()
+        displayEndPostActionMenu(currUser)
+    else:
+        displayEndPostActionMenu(currUser)
+
+
+def PostActionEdit(currUser, pid):
+    title = input("Enter new title(blank for no change): ")
+    body = input("Enter new body(blank for no change): ")
+    if title and body:
+        cursor.execute("update posts set (title=:t, body=:b) where pid=:p",{"t":title,"b":body,"p":pid})
+    elif title:
+        cursor.execute("update posts set title=:t where pid=:p",{"t":title,"p":pid})
+    elif body:
+        cursor.execute("update posts set (body=:b) where pid=:p",{"b":body,"p":pid})
+    else:
+        displayEndPostActionMenu(currUser)
+        return
+    cursor.commit()
+    displayEndPostActionMenu(currUser)
+    
+
+def displayMorePosts():
     pass
-
-def PostActionGiveABadge(currUser,pid):
-    pass
-
-def PostActionAddATag(currUser,pid):
-    pass
-
-def PostActionEdit(currUser,pid):
-    pass
-
-
 
 main()
