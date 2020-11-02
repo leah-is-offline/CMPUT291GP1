@@ -609,11 +609,14 @@ def getMatches(pid):
     
     return matches[pid]
 
-def executeSearchQuery(displayLimit):
+def executeSearchQuery(displayLimit, pidMatches):
     #function to execute search query, provided with user defined limit
     #recall that cursor and connection are global in scope of program
     global connection, cursor
 
+    placeholder = '?'
+    placeholders = ', '.join([placeholder] * len(pidMatches))
+    print(placeholders)
 
     #columns of posts table, number of votes, number of answers if post is a question(0 if no answers)
     #order based on the number of matching keywords (posts matching largest number of keywords on top
@@ -621,11 +624,17 @@ def executeSearchQuery(displayLimit):
     search_query = '''SELECT  p.pid, p.pdate, p.title, p.body, p.poster, ifnull(COUNT(v.vno),0), COUNT(a.qid), getMatches(p.pid)
     FROM posts p LEFT OUTER JOIN votes v ON v.pid = p.pid LEFT OUTER JOIN answers a ON p.pid = a.qid
     LEFT OUTER JOIN (SELECT pid, getMatches(pid) as matches FROM posts) matchTbl ON matchTbl.pid = p.pid
+    WHERE p.pid IN (%s)
     GROUP BY p.pid, p.pdate, p.title, p.body, p.poster
     ORDER BY matches DESC
-    LIMIT ?;'''
+    LIMIT ?;''' % placeholders
+    
 
-    cursor.execute(search_query, (displayLimit,))
+    pidMatches.append(displayLimit)
+    data = tuple(pidMatches)
+    print(data)
+    
+    cursor.execute(search_query, data)
 
     #display the results
     results = cursor.fetchall()
@@ -635,8 +644,8 @@ def executeSearchQuery(displayLimit):
     else:
         print("There were no matches for your keywords")
 
-
     return
+
 
 def SearchForPosts(currUser):
     #lets a user search for posts
@@ -665,7 +674,7 @@ def SearchForPosts(currUser):
     connection.create_function('getMatches', 1, getMatches)
 
     #execute searchy query
-    executeSearchQuery(displayLimit)
+    executeSearchQuery(displayLimit, pidMatches)
     
 
     #letting the user select a post or see more matches.    
@@ -685,7 +694,7 @@ def SearchForPosts(currUser):
     if selection == '1':
         #display 5 more posts from the search query
         displayLimit += 5
-        executeSearchQuery(displayLimit) 
+        executeSearchQuery(displayLimit,pidMatches) 
     elif selection == '2':
         #navigate to post action menu after user provides post id
         pid = input("enter the post id you would like to perform an action on: ")
