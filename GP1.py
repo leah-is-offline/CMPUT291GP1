@@ -605,7 +605,6 @@ def countMatches(keywords):
                 matches[pid[0]] += 1
 
 
-
 def getMatches(pid):
     #function to return how many matches a pid has in the list of provided keywords
     global matches
@@ -625,7 +624,7 @@ def executeSearchQuery(displayLimit, currUser):
 
     placeholder = '?'
     placeholders = ', '.join([placeholder] * len(pidMatches))
-    print(placeholders)
+
 
     #columns of posts table, number of votes, number of answers if post is a question(0 if no answers)
     #order based on the number of matching keywords (posts matching largest number of keywords on top
@@ -646,7 +645,7 @@ def executeSearchQuery(displayLimit, currUser):
     results = cursor.fetchall()
     if results is not None:
         for result in results:
-            print(result)
+            print('|'.join(str(val) for val in result))
     else:
         print("There were no matches for your keywords")
 
@@ -662,7 +661,7 @@ def SearchForPosts(currUser):
     displayLimit = 5 
 
     #get keywords from user
-    keywords = input("Enter keywords to search for a post (separated by a space): ")
+    keywords = input("Enter keywords to search for a post (or press enter to return all posts): ")
     while len(keywords) < 0:
         keywords = input("Please enter more than 0 keywords: ")
     keywords = list(keywords.split(" "))
