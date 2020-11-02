@@ -433,7 +433,7 @@ def displayMenu(currUser):
     op4 = "| 4 | Exit\n"
     b1 =  "______________________________________\n"
     b2 = "\n************************************************"
-    print(b2 + "\nto perform post actions, search for posts first" + b2)
+    print(b2 + "\nTo perform post actions, search for posts first" + b2)
     
     print("\n",header,op1,op2,op3,op4,b1)
     
@@ -623,6 +623,7 @@ def executeSearchQuery(displayLimit, currUser):
         if matches[key] != 0:
             pidMatches.append(key)
 
+    #CITATION: StackOverflow post by bobince https://stackoverflow.com/a/283801
     placeholder = '?'
     placeholders = ', '.join([placeholder] * len(pidMatches))
 
