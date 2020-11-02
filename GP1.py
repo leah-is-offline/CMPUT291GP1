@@ -432,7 +432,8 @@ def displayMenu(currUser):
     op3 = "| 3 | Logout\n"
     op4 = "| 4 | Exit\n"
     b1 =  "______________________________________\n"
-    print("*** to perform post actions, search for a post first ***")
+    b2 = "\n************************************************"
+    print(b2 + "\nto perform post actions, search for posts first" + b2)
     
     print("\n",header,op1,op2,op3,op4,b1)
     
