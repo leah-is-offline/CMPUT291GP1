@@ -779,10 +779,10 @@ def PostActionMarkAsTheAccepted(currUser, pid):
         choice = input("Question has accepted answer ("+question[1]+") Enter 1 to overwrite: ")
         if choice == 1:
             cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
-            cursor.commit()
+            connection.commit()
     else:
         cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
-        cursor.commit()
+        connection.commit()
     displayEndPostActionMenu(currUser)
 
 def PostActionGiveABadge(currUser, pid):
@@ -800,7 +800,7 @@ def PostActionGiveABadge(currUser, pid):
             break
     if bname:
         cursor.execute("insert into ubadges uid, bdate, bname values (uid, date('now'), bname)",{"uid":poster,"bname":bname})
-        cursor.commit()
+        connection.commit()
         displayEndPostActionMenu(currUser)
     else:
         displayEndPostActionMenu(currUser)
@@ -815,7 +815,7 @@ def PostActionAddATag(currUser, pid):
         duplicate = cursor.fetchone()
     if tag:
         cursor.execute("insert into tags (pid, tag) values (?, ?)", (pid, tag))
-        cursor.commit()
+        connection.commit()
         displayEndPostActionMenu(currUser)
     else:
         displayEndPostActionMenu(currUser)
@@ -833,7 +833,7 @@ def PostActionEdit(currUser, pid):
     else:
         displayEndPostActionMenu(currUser)
         return
-    cursor.commit()
+    connection.commit()
     displayEndPostActionMenu(currUser)
     
 
