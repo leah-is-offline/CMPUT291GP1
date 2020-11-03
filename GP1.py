@@ -775,8 +775,14 @@ def PostActionMarkAsTheAccepted(currUser, pid):
     post = cursor.fetchone()
     cursor.execute("select * from questions where pid=?",[post[1]])
     question = cursor.fetchone()
-    cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
-    cursor.commit()
+    if question[1]:
+        choice = input("Question has accepted answer ("+question[1]+") Enter 1 to overwrite: ")
+        if choice == 1:
+            cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
+            cursor.commit()
+    else:
+        cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
+        cursor.commit()
     displayEndPostActionMenu(currUser)
 
 def PostActionGiveABadge(currUser, pid):
