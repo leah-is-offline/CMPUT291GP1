@@ -23,12 +23,15 @@ class CurrentUser:
         self._uid = uid
 
 
-def main():
+def main(argv):
     global connection, cursor
 
     '''during demo DB will be passed through command line.
     Okay to connect this way FOR NOW (generates db in CWD)'''
     path="./GP1DB.db"
+    if len(argv)>0:
+        if os.path.isfile(argv[0]):
+            path = argv[0]
     connect(path)
 
     '''dont need to run the three following commands every run
@@ -828,5 +831,5 @@ def PostActionEdit(currUser, pid):
     displayEndPostActionMenu(currUser)
     
 
-
-main()
+if __name__ == "__main__":
+    main(sys.argv[1:])
