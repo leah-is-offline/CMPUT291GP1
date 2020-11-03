@@ -18,6 +18,7 @@ class TestPostActionMarkAsTheAccepted(unittest.TestCase):
                     self.assertEqual(cursor.execute.call_args_list[0], unittest.mock.call('select * from answers where pid=?;', ['p200']))
                     self.assertEqual(cursor.execute.call_args_list[1], unittest.mock.call('select * from questions where pid=?;', ['p100']))
                     self.assertEqual(cursor.execute.call_args_list[2], unittest.mock.call('update questions set theaid=? where pid=?;', ['p200', 'p100']))
+                    connection.commit.assert_called_once()
 
 
     @patch('builtins.input', lambda _ : '1')
@@ -34,6 +35,7 @@ class TestPostActionMarkAsTheAccepted(unittest.TestCase):
                     GP1.PostActionMarkAsTheAccepted(user, "p200")
                     print(cursor.execute.call_args_list)
                     self.assertEqual(cursor.execute.call_args_list, [unittest.mock.call('select * from answers where pid=?;', ['p200']), unittest.mock.call('select * from questions where pid=?;', ['p100']), unittest.mock.call('update questions set theaid=? where pid=?;', ['p200', 'p100'])])
+                    connection.commit.assert_called_once()
 
     @patch('builtins.input', lambda _ : '2')
     def test_overwrite_no(self):
@@ -49,6 +51,7 @@ class TestPostActionMarkAsTheAccepted(unittest.TestCase):
                     GP1.PostActionMarkAsTheAccepted(user, "p200")
                     print(cursor.execute.call_args_list)
                     self.assertEqual(cursor.execute.call_args_list, [unittest.mock.call('select * from answers where pid=?;', ['p200']), unittest.mock.call('select * from questions where pid=?;', ['p100'])])
+                    connection.commit.assert_not_called()
 
 
 if __name__ == "__main__":
