@@ -771,35 +771,39 @@ def PostActionVote(currUser, pid):
     displayEndPostActionMenu(currUser)
 
 def PostActionMarkAsTheAccepted(currUser, pid):
-    cursor.execute("select * from answers where pid=?;",[pid])
+    #check the post is an answer
+    cursor.execute("select * from answers where pid=?;", (pid))
     post = cursor.fetchone()
-    cursor.execute("select * from questions where pid=?",[post[1]])
+    cursor.execute("select * from questions where pid=?;", (post[1]))
     question = cursor.fetchone()
     if question[1]:
+        #if the question already has an answer prompt to overwrite
         choice = input("Question has accepted answer ("+question[1]+") Enter 1 to overwrite: ")
         if choice == 1:
-            cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
+            cursor.execute("update questions set theaid=? where pid=?;", (post[0], question[0]))
             connection.commit()
     else:
-        cursor.execute("update questions set theaid=:a where pid=:p",{"a":post[0],"p":question[0]})
+        cursor.execute("update questions set theaid=? where pid=?;", (post[0], question[0]))
         connection.commit()
     displayEndPostActionMenu(currUser)
 
 def PostActionGiveABadge(currUser, pid):
-    cursor.execute("select * from posts where pid=?;",[pid])
+    cursor.execute("select * from posts where pid=?;", (pid))
     post = cursor.fetchone()
     poster = post[4]
     bname = input("Enter a badge: ")
-    cursor.execute("select bname from badges where bname=?",[bname])
+    #check that badge exists
+    cursor.execute("select bname from badges where bname=?;", (bname))
     badge = cursor.fetchone()
     while badge is None:
+        #prompt for valid badge or cancel
         bname = input("Enter a valid badge(blank to cancel): ")
-        cursor.execute("select bname from badges where bname=?",[bname])
+        cursor.execute("select bname from badges where bname=?;", (bname))
         badge = cursor.fetchone()
-        if bname == "":
+        if not bname:
             break
     if bname:
-        cursor.execute("insert into ubadges uid, bdate, bname values (uid, date('now'), bname)",{"uid":poster,"bname":bname})
+        cursor.execute("insert into ubadges uid, bdate, bname values (?, date('now'), ?);", (poster, bname))
         connection.commit()
         displayEndPostActionMenu(currUser)
     else:
@@ -807,25 +811,31 @@ def PostActionGiveABadge(currUser, pid):
 
 def PostActionAddATag(currUser, pid):
     tagIn = input("Enter tag(s): ")
+    #split tags into list
     tags = tagIn.split(" ")
+    new_tag = False
     for tag in tags:
-        cursor.execute("select * from tags where pid=:a and tag=:b", {"a":pid, "b":tag})
+        #iterate over list and add non-duplicate tags
+        cursor.execute("select * from tags where pid=? and tag=?;", (pid, tag))
         duplicate = cursor.fetchone()
         if not duplicate:
-            cursor.execute("insert into tags (pid, tag) values (?, ?)", (pid, tag))
-    connection.commit()
+            cursor.execute("insert into tags (pid, tag) values (?, ?);", (pid, tag))
+            new_tag = True
+    if new_tag:
+        connection.commit()
     displayEndPostActionMenu(currUser)
 
 
 def PostActionEdit(currUser, pid):
+    #edit title and/or body
     title = input("Enter new title(blank for no change): ")
     body = input("Enter new body(blank for no change): ")
     if title and body:
-        cursor.execute("update posts set (title=:t, body=:b) where pid=:p",{"t":title,"b":body,"p":pid})
+        cursor.execute("update posts set (title=?, body=?) where pid=?;", (title, body, pid))
     elif title:
-        cursor.execute("update posts set title=:t where pid=:p",{"t":title,"p":pid})
+        cursor.execute("update posts set title=? where pid=?;", (title, pid))
     elif body:
-        cursor.execute("update posts set (body=:b) where pid=:p",{"b":body,"p":pid})
+        cursor.execute("update posts set (body=?) where pid=?;", (body, pid))
     else:
         displayEndPostActionMenu(currUser)
         return
