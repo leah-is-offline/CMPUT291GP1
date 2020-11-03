@@ -806,19 +806,15 @@ def PostActionGiveABadge(currUser, pid):
         displayEndPostActionMenu(currUser)
 
 def PostActionAddATag(currUser, pid):
-    tag = input("Enter a tag: ")
-    cursor.execute("select * from tags where pid=:a and tag=:b", {"a":pid, "b":tag})
-    duplicate = cursor.fetchone()
-    while duplicate:
-        tag = input("Enter a new tag(blank to cancel): ")
+    tagIn = input("Enter tag(s): ")
+    tags = tagIn.split(" ")
+    for tag in tags:
         cursor.execute("select * from tags where pid=:a and tag=:b", {"a":pid, "b":tag})
         duplicate = cursor.fetchone()
-    if tag:
-        cursor.execute("insert into tags (pid, tag) values (?, ?)", (pid, tag))
-        connection.commit()
-        displayEndPostActionMenu(currUser)
-    else:
-        displayEndPostActionMenu(currUser)
+        if not duplicate:
+            cursor.execute("insert into tags (pid, tag) values (?, ?)", (pid, tag))
+    connection.commit()
+    displayEndPostActionMenu(currUser)
 
 
 def PostActionEdit(currUser, pid):
