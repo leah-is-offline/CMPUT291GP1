@@ -833,6 +833,7 @@ def PostActionAddATag(currUser, pid):
         duplicate = cursor.fetchone()
         if not duplicate and (len(tag) > 0):
             cursor.execute("insert into tags (pid, tag) values (?, ?);", [pid, tag])
+            
             new_tag = True
         elif len(tag) == 0:
             print("Your tag was empty and was not entered.")
