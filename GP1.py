@@ -36,9 +36,9 @@ def main(argv):
 
     '''dont need to run the three following commands every run
     just to instantiate the db and define the tables '''
-    dropTables() 
-    defineTables()
-    insertData()
+    #dropTables() 
+    #defineTables()
+    #insertData()
 
     currUser = CurrentUser() 
     homeScreen(currUser)
