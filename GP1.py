@@ -799,7 +799,7 @@ def PostActionGiveABadge(currUser, pid):
     poster = post[4]
     cursor.execute("select distinct(bname) from badges;")
     badges = cursor.fetchall()
-    bname = input("Enter a badge {bn}: ".format(bn=badges))
+    bname = input("Enter a badge {bn}: ".format(bn=str(badges).replace("(", "").replace(")", "").replace(",", "")))
     #check that badge exists
     cursor.execute("select bname from badges where bname=?;", [bname])
     badge = cursor.fetchone()
