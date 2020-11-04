@@ -36,9 +36,9 @@ def main(argv):
 
     '''dont need to run the three following commands every run
     just to instantiate the db and define the tables '''
-    dropTables() 
-    defineTables()
-    insertData()
+    #dropTables() 
+    #defineTables()
+    #insertData()
 
     currUser = CurrentUser() 
     homeScreen(currUser)
@@ -823,9 +823,9 @@ def PostActionGiveABadge(currUser, pid):
     displayEndPostActionMenu(currUser)
 
 def PostActionAddATag(currUser, pid):
-    tagIn = input("Enter tag(comma seperated): ")
+    tagIn = input("Enter tag(s): ")
     #split tags into list
-    tags = tagIn.split(",")
+    tags = tagIn.split(" ")
     new_tag = False
     for tag in tags:
         #iterate over list and add non-duplicate tags
@@ -835,9 +835,9 @@ def PostActionAddATag(currUser, pid):
             cursor.execute("insert into tags (pid, tag) values (?, ?);", [pid, tag])
             new_tag = True
         elif len(tag) == 0:
-            print("Your tag was empty and was not entered")
+            print("Your tag was empty and was not entered.")
         else:
-            print("This post already has that tag. Your tag was not entered")
+            print("This post already has that tag. Your tag was not entered.")
     if new_tag:
         connection.commit()
     displayEndPostActionMenu(currUser)
@@ -848,11 +848,11 @@ def PostActionEdit(currUser, pid):
     title = input("Enter new title(blank for no change): ")
     body = input("Enter new body(blank for no change): ")
     if title and body:
-        cursor.execute("update posts set title=?, body=? where pid=?;", [title, body, pid])
+        cursor.execute("update posts set (title=?, body=?) where pid=?;", [title, body, pid])
     elif title:
         cursor.execute("update posts set title=? where pid=?;", [title, pid])
     elif body:
-        cursor.execute("update posts set body=? where pid=?;", [body, pid])
+        cursor.execute("update posts set (body=?) where pid=?;", [body, pid])
     else:
         displayEndPostActionMenu(currUser)
         return
