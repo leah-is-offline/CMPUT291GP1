@@ -660,7 +660,7 @@ def executeSearchQuery(displayLimit, currUser):
 
 def SearchForPosts(currUser):
     #lets a user search for posts
-    global connection, cursor, matches, pidMatches
+    global connection, cursor, matches
 
     #default display limit
     displayLimit = 5 
