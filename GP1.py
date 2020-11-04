@@ -817,9 +817,11 @@ def PostActionGiveABadge(currUser, pid):
         cursor.execute("select * from ubadges where uid=? and bdate=date('now') ", [poster])
         if cursor.fetchone() is None:
             cursor.execute("insert into ubadges (uid, bdate, bname) values (?, date('now'), ?);", [poster, bname])
+            print("Badge successfully awarded.")
             connection.commit()
         else:
             print("User already has a badge\n")
+
     displayEndPostActionMenu(currUser)
 
 def PostActionAddATag(currUser, pid):
