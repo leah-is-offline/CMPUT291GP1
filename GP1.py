@@ -36,9 +36,9 @@ def main(argv):
 
     '''dont need to run the three following commands every run
     just to instantiate the db and define the tables '''
-    #dropTables() 
-    #defineTables()
-    #insertData()
+    dropTables() 
+    defineTables()
+    insertData()
 
     currUser = CurrentUser() 
     homeScreen(currUser)
@@ -848,11 +848,11 @@ def PostActionEdit(currUser, pid):
     title = input("Enter new title(blank for no change): ")
     body = input("Enter new body(blank for no change): ")
     if title and body:
-        cursor.execute("update posts set (title=?, body=?) where pid=?;", [title, body, pid])
+        cursor.execute("update posts set title=?, body=? where pid=?;", [title, body, pid])
     elif title:
         cursor.execute("update posts set title=? where pid=?;", [title, pid])
     elif body:
-        cursor.execute("update posts set (body=?) where pid=?;", [body, pid])
+        cursor.execute("update posts set body=? where pid=?;", [body, pid])
     else:
         displayEndPostActionMenu(currUser)
         return
