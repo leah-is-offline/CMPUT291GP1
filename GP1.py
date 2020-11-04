@@ -859,6 +859,7 @@ def PostActionEdit(currUser, pid):
     else:
         displayEndPostActionMenu(currUser)
         return
+    
     connection.commit()
     displayEndPostActionMenu(currUser)
     
