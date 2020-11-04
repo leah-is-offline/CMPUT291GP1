@@ -673,6 +673,7 @@ def SearchForPosts(currUser):
 
     #initiliaze the GLOBAL dictionary containing pids and their corresponding matches to keywords
     countMatches(keywords)
+
     
     #initialize user defined function
     connection.create_function('getMatches', 1, getMatches)
