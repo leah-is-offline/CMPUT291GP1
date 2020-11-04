@@ -808,11 +808,14 @@ def PostActionGiveABadge(currUser, pid):
         if not bname:
             break
     if bname:
-        cursor.execute("insert into ubadges uid, bdate, bname values (?, date('now'), ?);", [poster, bname])
-        connection.commit()
-        displayEndPostActionMenu(currUser)
-    else:
-        displayEndPostActionMenu(currUser)
+        #check if the user got the badge today
+        cursor.execute("select * from ubadges where uid=? and bdate=date('now') and bname=?", [poster, bname])
+        if cursor.fetchone() is None:
+            cursor.execute("insert into ubadges uid, bdate, bname values (?, date('now'), ?);", [poster, bname])
+            connection.commit()
+        else:
+            print("User already has that badge\n")
+    displayEndPostActionMenu(currUser)
 
 def PostActionAddATag(currUser, pid):
     tagIn = input("Enter tag(s): ")

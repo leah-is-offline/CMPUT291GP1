@@ -62,10 +62,10 @@ class TestPostActionGiveABadge(unittest.TestCase):
                 with patch('GP1.cursor') as cursor:
                     cursor.execute = unittest.mock.MagicMock()
                     cursor.fetchone = unittest.mock.Mock()
-                    cursor.fetchone.side_effect = [('p100', 'date', 'title', 'body', 'u100'), ('socratic question')]
+                    cursor.fetchone.side_effect = [('p100', 'date', 'title', 'body', 'u100'), ('socratic question'), (None)]
                     user = GP1.CurrentUser("u100")
                     GP1.PostActionGiveABadge(user, 'p100')
-                    self.assertEqual(cursor.execute.call_args_list, [unittest.mock.call("select * from posts where pid=?;", ['p100']), unittest.mock.call("select bname from badges where bname=?;", ['socratic question']), unittest.mock.call("insert into ubadges uid, bdate, bname values (?, date('now'), ?);", ['u100', 'socratic question'])])
+                    self.assertEqual(cursor.execute.call_args_list, [unittest.mock.call("select * from posts where pid=?;", ['p100']), unittest.mock.call("select bname from badges where bname=?;", ['socratic question']), unittest.mock.call("select * from ubadges where uid=? and bdate=date('now') and bname=?", ['u100', 'socratic question']), unittest.mock.call("insert into ubadges uid, bdate, bname values (?, date('now'), ?);", ['u100', 'socratic question'])])
                     connection.commit.assert_called_once()
     
     def test_bad_badge_cancel(self):
@@ -80,7 +80,6 @@ class TestPostActionGiveABadge(unittest.TestCase):
                         cursor.fetchone.side_effect = [('p100', 'date', 'title', 'body', 'u100'), (None), (None)]
                         user = GP1.CurrentUser("u100")
                         GP1.PostActionGiveABadge(user, 'p100')
-                        print(cursor.execute.call_args_list)
                         self.assertEqual(cursor.execute.call_args_list, [unittest.mock.call("select * from posts where pid=?;", ['p100']), unittest.mock.call("select bname from badges where bname=?;", ['']), unittest.mock.call("select bname from badges where bname=?;", [''])])
                         connection.commit.assert_not_called()
 
