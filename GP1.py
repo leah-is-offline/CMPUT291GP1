@@ -831,9 +831,13 @@ def PostActionAddATag(currUser, pid):
         #iterate over list and add non-duplicate tags
         cursor.execute("select * from tags where pid=? and tag=?;", [pid, tag])
         duplicate = cursor.fetchone()
-        if not duplicate:
+        if not duplicate and (len(tag) > 0):
             cursor.execute("insert into tags (pid, tag) values (?, ?);", [pid, tag])
             new_tag = True
+        elif len(tag) == 0:
+            print("Your tag was empty and was not entered")
+        else:
+            print("This post already has that tag. Your tag was not entered")
     if new_tag:
         connection.commit()
     displayEndPostActionMenu(currUser)
