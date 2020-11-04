@@ -823,9 +823,9 @@ def PostActionGiveABadge(currUser, pid):
     displayEndPostActionMenu(currUser)
 
 def PostActionAddATag(currUser, pid):
-    tagIn = input("Enter tag(s): ")
+    tagIn = input("Enter tag(comma seperated): ")
     #split tags into list
-    tags = tagIn.split(" ")
+    tags = tagIn.split(",")
     new_tag = False
     for tag in tags:
         #iterate over list and add non-duplicate tags
