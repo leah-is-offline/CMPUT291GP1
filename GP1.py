@@ -796,7 +796,9 @@ def PostActionGiveABadge(currUser, pid):
     cursor.execute("select * from posts where pid=?;", [pid])
     post = cursor.fetchone()
     poster = post[4]
-    bname = input("Enter a badge: ")
+    cursor.execute("select distinct(bname) from badges;")
+    badges = cursor.fetchall()
+    bname = input("Enter a badge {bn}: ".format(bn=badges))
     #check that badge exists
     cursor.execute("select bname from badges where bname=?;", [bname])
     badge = cursor.fetchone()
@@ -809,12 +811,12 @@ def PostActionGiveABadge(currUser, pid):
             break
     if bname:
         #check if the user got the badge today
-        cursor.execute("select * from ubadges where uid=? and bdate=date('now') and bname=?", [poster, bname])
+        cursor.execute("select * from ubadges where uid=? and bdate=date('now') ", [poster])
         if cursor.fetchone() is None:
-            cursor.execute("insert into ubadges uid, bdate, bname values (?, date('now'), ?);", [poster, bname])
+            cursor.execute("insert into ubadges (uid, bdate, bname) values (?, date('now'), ?);", [poster, bname])
             connection.commit()
         else:
-            print("User already has that badge\n")
+            print("User already has a badge\n")
     displayEndPostActionMenu(currUser)
 
 def PostActionAddATag(currUser, pid):
