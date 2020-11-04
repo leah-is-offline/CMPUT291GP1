@@ -84,6 +84,11 @@ class TestPostActionGiveABadge(unittest.TestCase):
                         self.assertEqual(cursor.execute.call_args_list, [unittest.mock.call("select * from posts where pid=?;", ['p100']), unittest.mock.call("select bname from badges where bname=?;", ['']), unittest.mock.call("select bname from badges where bname=?;", [''])])
                         connection.commit.assert_not_called()
 
+class TestPostActionAddATag(unittest.TestCase):
+    pass
+
+class TestPostActionEdit(unittest.TestCase):
+    pass
 
 if __name__ == "__main__":
     unittest.main()

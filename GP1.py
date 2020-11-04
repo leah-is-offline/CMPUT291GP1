@@ -774,6 +774,11 @@ def PostActionMarkAsTheAccepted(currUser, pid):
     #check the post is an answer
     cursor.execute("select * from answers where pid=?;", [pid])
     post = cursor.fetchone()
+    while post is None:
+        print("The post you selected is not a question\n")
+        pid = input("Please enter a valid post id of a question: ")
+        cursor.execute("select * from answers where pid=?;", [pid])
+        post = cursor.fetchone()
     cursor.execute("select * from questions where pid=?;", [post[1]])
     question = cursor.fetchone()
     if question[1]:
