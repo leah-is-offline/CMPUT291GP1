@@ -36,9 +36,9 @@ def main(argv):
 
     '''dont need to run the three following commands every run
     just to instantiate the db and define the tables '''
-    dropTables() 
-    defineTables()
-    insertData()
+    #dropTables() 
+    #defineTables()
+    #insertData()
 
     currUser = CurrentUser() 
     homeScreen(currUser)
@@ -776,8 +776,8 @@ def PostActionMarkAsTheAccepted(currUser, pid):
     cursor.execute("select * from answers where pid=?;", [pid])
     post = cursor.fetchone()
     while post is None:
-        print("The post you selected is not a question\n")
-        pid = input("Please enter a valid post id of a question: ")
+        print("The post you selected is not an answer\n")
+        pid = input("Please enter a valid post id of an answer (to be marked accepted): ")
         cursor.execute("select * from answers where pid=?;", [pid])
         post = cursor.fetchone()
     cursor.execute("select * from questions where pid=?;", [post[1]])
@@ -788,6 +788,8 @@ def PostActionMarkAsTheAccepted(currUser, pid):
         if choice == '1':
             cursor.execute("update questions set theaid=? where pid=?;", [post[0], question[0]])
             connection.commit()
+        else:
+            print("Invalid input. Accepted answer not overwritten")
     else:
         cursor.execute("update questions set theaid=? where pid=?;", [post[0], question[0]])
         connection.commit()
@@ -799,7 +801,7 @@ def PostActionGiveABadge(currUser, pid):
     poster = post[4]
     cursor.execute("select distinct(bname) from badges;")
     badges = cursor.fetchall()
-    bname = input("Enter a badge {bn}: ".format(bn=str(badges).replace("(", "").replace(")", "").replace(",", "")))
+    bname = input("Enter a badge {bn}: ".format(bn=badges))
     #check that badge exists
     cursor.execute("select bname from badges where bname=?;", [bname])
     badge = cursor.fetchone()
